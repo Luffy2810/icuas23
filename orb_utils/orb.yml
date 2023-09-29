@@ -1,0 +1,35 @@
+name: orb
+root: ./
+startup_window: roscore
+pre_window:
+  tmux setenv Bag_File $Bag_File
+windows:
+
+
+
+
+  - orb_python:
+      layout: tiled
+      panes:
+        - sleep 2;roscore
+        - cd;cd run; sleep 2.5;rosparam set use_sim_time true;sleep 2; python3 write.py
+        - cd;cd run;sleep 2;rosparam set use_sim_time true;sleep 2; python3 broadcast.py
+        - cd;cd run;sleep 2;rosparam set use_sim_time true;sleep 2; python3 d2r.py
+        - cd;cd run/icuas/useless;sleep 2;rosparam set use_sim_time true; python3 ground_truth_to_txt.py
+
+
+
+  - orb_launch:
+      layout: tiled
+      panes:
+        - sleep 2;rosparam set use_sim_time true;sleep 2;echo Enter Bag File Path; rosbag play --clock $Bag_File
+        - sleep 3; roslaunch orb_slam2_ros orb_slam2_d435_rgbd.launch
+     
+
+
+
+
+
+
+        
+        

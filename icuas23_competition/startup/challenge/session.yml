@@ -1,0 +1,66 @@
+name: icuas_ch
+root: ./
+startup_window: roscore
+pre_window: |
+  export UAV_NAMESPACE=red;
+windows:
+  # - solution2:
+  #     layout: tiled
+  #     panes:
+  #       # - waitForRos; waitForSimulation; rosrun icuas23_competition swarm_traj_node_v2.py __ns:="$UAV_NAMESPACE"
+  #       - waitForRos; waitForSimulation; sleep 2;rosrun icuas23_competition traj_node.py __ns:="$UAV_NAMESPACE"
+  #       - waitForRos; waitForSimulation; roslaunch ego_planner run_in_sim.launch
+
+  - roscore:
+      layout:
+      panes:
+        - roscore
+        - export SITL_RITW_TERMINAL="tmux new-window -d -n:ardupilot1"; waitForRos; 
+          roslaunch ardupilot_gazebo sim_vehicle.launch 
+          enable_console:=false
+          additional_arguments:="--no-rebuild"
+          parm_file:=$(rospack find icuas23_competition)/parameters/arducopter_nogps.params
+        - waitForRos; rosparam set use_sim_time true; roslaunch ardupilot_gazebo mavros.launch
+
+
+
+
+  - gazebo:
+      layout: tiled
+      panes:
+        - waitForRos; roslaunch ardupilot_gazebo kopterworx.launch 
+          use_sim_time:=true
+          x:=10 y:=2
+          world:=$(rospack find icuas23_competition)/worlds/well_lit.world
+        # world:=$(rospack find icuas23_competition)/worlds/test_icuas.world
+        - waitForRos; waitForSimulation; roslaunch icuas23_competition spawn_inspection_world.launch
+        - waitForRos; waitForSimulation; sleep 2; rosrun icuas23_competition spawn_tiles.py __ns:="$UAV_NAMESPACE"
+  - arm&takeof:
+      layout: tiled
+      panes:
+        - waitForRos; roslaunch uav_ros_control pid_carrot.launch 
+          manual_takeoff:=false
+          msf_callback_enable:=true
+          odometry:=odometry
+          control_type:=pid_cascade_node_yawrate
+          default_params:=custom_config/position_control_thrust.yaml
+        - |
+          waitForRos
+          waitForSysStatus
+          rosrun ardupilot_gazebo automatic_takeoff.sh 2 /$UAV_NAMESPACE/odometry
+          sleep 5
+          rostopic pub --latch /$UAV_NAMESPACE/challenge_started std_msgs/Bool True
+  - trajectory:
+      layout: tiled
+      panes:
+        - waitForRos; roslaunch uav_ros_tracker topp_tracker.launch 
+          tracker_config:=custom_config/topp_config_custom.yaml
+  - solution:
+      layout: tiled
+      panes:
+        - waitForRos; waitForSimulation; roslaunch ego_planner rviz.launch
+        - waitForRos; waitForSimulation; sleep 2;rosrun icuas23_competition traj_node.py __ns:="$UAV_NAMESPACE"
+        - waitForRos; waitForSimulation; roslaunch ego_planner run_in_sim.launch
+        # - waitForRos; waitForSimulation; roslaunch ego_planner single_drone_interactive.launch
+        
+        

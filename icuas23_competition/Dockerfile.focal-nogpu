@@ -1,0 +1,16 @@
+FROM lmark1/uav_ros_simulation:focal-nogpu
+
+ARG HOME=/root
+ARG CATKIN_WORKSPACE=uav_ws
+ARG USER=root
+
+# Step 1: Install all the needed software packages here
+RUN apt-get update && apt-get install -q -y \
+    vim
+
+# Step 2: Create the icuas23_competition package and copy its contents
+WORKDIR $HOME/$CATKIN_WORKSPACE/src/icuas23_competition
+COPY . .
+
+# Step 3: Build the Catkin workspace
+RUN catkin build --limit-status-rate 0.2
